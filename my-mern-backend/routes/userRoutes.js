@@ -1,5 +1,8 @@
 const express = require('express')
 const router = express.Router();
+const mongoose = require('mongoose')
+
+const User = require('../models/User');
 
 const users = [
     { id: 1, name: 'Alice', email: 'alice@example.com' },
@@ -8,11 +11,11 @@ const users = [
 ];
 
 const validateUserCreation = (req, res, next) => {
-    const { name, email } = req.body;
+    const { username, password } = req.body;
 
-    if(!name || !email){
+    if(!username || !password){
         return res.status(400).json({
-            message: 'Bad Request: Name and email are required'
+            message: 'Bad Request: Username and password are required'
         });
     }
 
@@ -23,29 +26,39 @@ router.route('/')
     .get((req, res) => {
         res.status(200).json(users);
     })
-    .post(validateUserCreation, (req, res) => {
-        const newUser = req.body;
-        const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-        const userWithId = { id: newId, ...newUser };
-        users.push(userWithId);
+    .post(validateUserCreation, async (req, res) => {
+        const { username, password } = req.body;
+        
+        if (!username || !password){
+            return res.status(400).json({
+                message: 'Please include a valid username and password'
+            })
+        }
 
-        console.log('Received new user data via router:', userWithId);
+        const newUser = new User({
+            username,
+            password
+        });
+
+        const savedUser = await newUser.save();
+
         res.status(201).json({
             message: 'User created successfully via router!',
-            user: userWithId
+            user: savedUser
         });
     });
 
 router.route('/:id')
-    .get((req, res) => {
+    .get(async (req, res) => {
         const userId = req.params.id;
-        const user = users.find(u => u.id === parseInt(userId));
 
-        if(isNaN(userId)){
+        if(!mongoose.Types.ObjectId.isValid(userId)){
             return res.status(400).json({
-                message: 'Bad Request: User ID must be a number.'
+                message: 'Bad Request: Invalid User ID.'
             });
         };
+
+        const user = await User.findById(userId);
 
         if (user) {
             res.status(200).json(user);
