@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-
+const mongoose = require('mongoose');
 const Note = require('../models/Note');
+const { protect } = require('../middleware/authMiddleware');
 
 router.get('/', async (req, res, next) => {
     try {
@@ -36,11 +37,11 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', protect, async (req, res, next) => {
     try {
-        const { title, content, userId } = req.body;
+        const { title, content } = req.body;
 
-        if (!title || !content || !userId){
+        if (!title || !content){
             return res.status(400).json({
                 message: 'Please include a title, content, and user ID'
             })
@@ -49,7 +50,7 @@ router.post('/', async (req, res, next) => {
         const newNote = new Note({
             title,
             content,
-            userId
+            userId: req.user.id
         })
 
         const savedNote = await newNote.save();
@@ -61,7 +62,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', protect, async (req, res, next) => {
     try {
         const { id } = req.params;
         const { title, content } = req.body;
@@ -72,17 +73,25 @@ router.put('/:id', async (req, res, next) => {
             });
         }
 
-        const updatedNote = await Note.findByIdAndUpdate(
-            id, 
-            { title, content },
-            { new: true, runValidators: true}
-        );
+        const note = await Note.findById(id);
 
-        if (!updatedNote) {
+        if(!note){
             return res.status(404).json({
                 message: 'Note not found'
             });
         }
+
+        if(note.userId.toString() !== req.user.id){
+            return res.status(403).json({
+                message: 'Not authorized to update'
+            })
+        }
+
+        const updatedNote = await Note.findByIdAndUpdate(
+            id, 
+            { title, content, updatedAt: Date.now() },
+            { new: true, runValidators: true}
+        );
 
         res.status(200).json(updatedNote);
     } catch (error) {
@@ -90,7 +99,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', protect, async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -100,13 +109,15 @@ router.delete('/:id', async (req, res, next) => {
             });
         }
 
-        const deletedNote = await Note.findByIdAndDelete(id);
+        const note = await Note.findById(id);
 
-        if(!deletedNote){
-            return res.status(404).json({
-                message: 'Note not found'
-            });
+        if(note.userId.toString() !== req.user.id){
+            return res.status(403).json({
+                message: 'Not authorized to delete'
+            })
         }
+
+        await Note.findByIdAndDelete(id);
 
         res.status(204).send();
     } catch (error) {
