@@ -1,0 +1,12 @@
+# Node.js
+node_modules/
+npm-debug.log
+.env
+
+# Optional: IDE specific files (uncomment if you use these IDEs and want to ignore)
+# .vscode/
+# .idea/
+
+# Build artifacts (if you later put frontend build output here)
+# build/
+# dist/
