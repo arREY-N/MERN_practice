@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000
 
@@ -23,6 +24,13 @@ mongoose.connect(mongoURI)
 
 // Middlewares
 
+if(process.env.NODE_ENV !== 'production'){
+    app.use(cors());
+    console.log('CORS enabled for development environment');
+} else {
+    console.log('CORS is NOT enabled for production environment')
+}
+
 app.use(express.static('public'));
 app.use(express.json())
 app.use((req, res, next) => {
@@ -37,10 +45,12 @@ app.get('/about', (req, res) => {
 });
 
 const userRoutes = require('./routes/userRoutes');
-const noteRoutes = require('./routes/noteRoutes')
+const noteRoutes = require('./routes/noteRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 app.use('/api/users', userRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/simulate-error', (req, res, next) => {
     try {
