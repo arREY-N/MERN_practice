@@ -80,7 +80,7 @@ router.route('/:id')
         }
     })
     .delete((req, res) => {
-        const userId = parseInt(res.params.id);
+        const userId = parseInt(req.params.id);
 
         if(isNaN(userId)){
             return res.status(400).json({
