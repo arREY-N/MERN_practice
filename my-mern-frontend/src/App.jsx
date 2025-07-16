@@ -6,49 +6,86 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 console.log('API Base URL: ', API_BASE_URL);
 
 function App() {
-	const [message, setMessage] = useState('Loading backend message...');
-	const [error, setError] = useState(null);
-	
-	useEffect(() => {
-		const fetchTestMessage = async () => {
-			try {
-				const response = await axios.get(`${API_BASE_URL}/notes`);
-
-				setMessage(
-					`Successfully connected to backend. 
-					Example response data length: ${response.data.length}
-					notes.`);
-				setError(null);
-			} catch(err) {
-				console.error('Error connecting to backend:', err);
-				setError('Failed to connect to backend. Check console for details. Make sure your backend server is running and CORS is configured.');
-        		setMessage('Backend connection failed.');
-			}
-		};
-
-		fetchTestMessage();
-	}, []);
-
+	const entries = [
+		{id: 1, title: 'Note 1', content: 'Hello note 1'},
+		{id: 2, title: 'Note 2', content: 'Hello note 2'},
+		{id: 3, title: 'Note 3', content: 'Hello note 3'},
+	]
 	return (
-		<div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-			
-			<h1 className="text-4xl font-bold text-gray-800 mb-6">MERN Note App Frontend</h1>
-			
-			<div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-				<h2 className="text-2xl font-semibold text-gray-700 mb-4">Backend Connection Status:</h2>
-				{ 
-					error ? 
-					<p className="text-red-600 text-lg">{error}</p> : 
-					<p className="text-green-600 text-lg">{message}</p>
-				}
-
-				<p className="mt-4 text-gray-600">
-					This is your React frontend. We'll build out the authentication and note management UI here.
-				</p>
-			</div>
-
-		</div>
+		<>
+			<NoteForm/>
+		</>
 	);	
+}
+
+function ToggleMessage(){
+	const [message, setMessage] = useState(true);
+
+	function toggle(){
+		setMessage(!message);
+	}
+	
+	return(
+		<div>
+			<h1>Message is {message == true ? 'ON' : 'OFF'}</h1>
+			<button onClick={toggle}>Click me</button>
+		</div>
+	);
+}
+
+function NoteList(prop){
+	const notes = prop.notes;
+
+	return(
+		<>
+			{
+				notes.length > 0 ? 
+					notes.map(item => (
+						<div key={item.id}>
+							<h1>{item.title}</h1>
+							<p>{item.content}</p>
+						</div>
+					)) 
+					:
+					<h1>No notes to display</h1>
+			}	
+		</>
+	);
+}
+
+function NoteForm(){
+	const [title, setTitle] = useState('');
+	const [content, setContent] = useState('');
+
+	const onTitleChange = (event) => {
+		setTitle(event.target.value);
+	}
+
+	const onContentChange = (event) => {
+		setContent(event.target.value);
+	}
+
+	const submitForm = (event) => {
+		event.preventDefault();
+		console.log('Title: ', title);
+		console.log('Content: ', content);
+		setTitle('');
+		setContent('');
+	}
+
+	return(
+		<form onSubmit={submitForm}>
+			<fieldset>
+				<label htmlFor="title">TITLE</label>
+				<input type="text" name='title' value={title} onChange={onTitleChange}/>
+
+				<label htmlFor="content">CONTENT</label>
+				<textarea name="content" value={content} onChange={onContentChange}/>
+
+				<button type='submit'>SUBMIT</button>
+			</fieldset>
+		</form>
+	);
 }
 
 export default App
