@@ -4,9 +4,9 @@ const mongoose = require('mongoose');
 const Note = require('../models/Note');
 const { protect } = require('../middleware/authMiddleware');
 
-router.get('/', async (req, res, next) => {
+router.get('/', protect, async (req, res, next) => {
     try {
-        const notes = await Note.find().sort({createdAt: -1});
+        const notes = await Note.find().sort({createdAt: -1}).populate('userId');
         res.status(200).json(notes);
     } catch (error){
         next(error);
